@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'drf_yasg',
+    'django_filters',
 
     'users'
 ]
@@ -83,11 +84,11 @@ WSGI_APPLICATION = 'travelproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'travelproject'),
-        'USER': os.getenv('DB_USER', 'travelproject'),
-        'PASSWORD': os.getenv('DB_PASS', '1234'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'NAME': os.environ.get('DB_NAME', 'travelproject'),
+        'USER': os.environ.get('DB_USER', 'travelproject'),
+        'PASSWORD': os.environ.get('DB_PASS', '1234'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
@@ -138,8 +139,14 @@ AUTH_USER_MODEL = 'users.User'
 
 # SMTP Mail service with decouple
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', False)
+EMAIL_PORT = os.environ.get('EMAIL_PORT', 1024)
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'travel_project')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '1234')
+
+
+# REST
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}

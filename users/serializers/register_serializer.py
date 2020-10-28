@@ -1,8 +1,5 @@
-import uuid
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-
-from users.models import UnconfirmedUser
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -36,11 +33,3 @@ class RegisterSerializer(serializers.ModelSerializer):
         attrs.pop('password2', None)
 
         return attrs
-
-    def _create_token(self):
-        return uuid.uuid4()
-
-    def create(self, validated_data):
-        user = get_user_model().objects.create_user(**validated_data)
-        UnconfirmedUser.objects.create(user=user, token=self._create_token())
-        return user
