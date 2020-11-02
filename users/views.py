@@ -2,13 +2,15 @@ import uuid
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.conf import settings
+from rest_framework import status
 from rest_framework.generics import CreateAPIView
 from rest_framework.views import APIView
 from rest_framework.exceptions import APIException, NotFound
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.settings import api_settings
 
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import RegisterSerializer, UserSerializer, LoginSerializer
 from .models import UnconfirmedUser, User
 
 
@@ -46,6 +48,7 @@ class RegisterView(CreateAPIView):
             raise APIException(
                 'Something went wrong. Please try again in a few moments.')
 
+        user.set_password(user.password)
         user.save()
         unconfirmed_user.save()
 
@@ -70,3 +73,9 @@ class ConfirmEmailView(APIView):
         unconfirmed_user.delete()
         user.save()
         return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+
+
+class LoginView(ObtainAuthToken):
+
+    serializer_class = LoginSerializer
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
