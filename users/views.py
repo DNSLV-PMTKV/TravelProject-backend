@@ -1,6 +1,7 @@
 import uuid
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from django.template.loader import render_to_string
 from django.conf import settings
 from rest_framework import status
 from rest_framework.generics import CreateAPIView
@@ -17,10 +18,14 @@ from .models import UnconfirmedUser, User
 def send_confirmation_email(to_mail: str, token: str):
 
     subject = 'Hello?'
-    message = 'THIS IS YOUR TOKEN: {}'.format(token)
+    context = {
+        'url': f'/api/confirm?token={token}'
+    }
+    template = render_to_string('confirm_email.html', context)
     from_mail = settings.EMAIL_HOST_USER
 
-    send_mail(subject, message, from_mail, [to_mail])
+    send_mail(subject, 'Activate your account',
+              from_mail, [to_mail], html_message=template)
 
 
 class RegisterView(CreateAPIView):
