@@ -1,4 +1,5 @@
 import uuid
+import datetime
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -9,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import APIException, NotFound
 from rest_framework.response import Response
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
 from rest_framework.settings import api_settings
 
 from .serializers import RegisterSerializer, UserSerializer, LoginSerializer
@@ -84,3 +86,23 @@ class LoginView(ObtainAuthToken):
 
     serializer_class = LoginSerializer
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+
+        if serializer.is_valid():
+            token, created = Token.objects.get_or_create(
+                user=serializer.validated_data['user'])
+            utc_now = datetime.datetime.utcnow()
+
+            if not created and token.created < utc_now - datetime.timedelta(
+                    hours=settings.TOKEN_EXPIRE_IN_HOURS):
+                token.delete()
+                token = Token.objects.create(
+                    user=serializer.validated_data['user'])
+                token.created = datetime.datetime.utcnow()
+                token.save()
+
+            return Response({'token': token.key})
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
