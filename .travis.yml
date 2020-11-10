@@ -8,8 +8,8 @@ services:
 install:
   - pip install tox
 before_script:
-  - createuser -U postgres -d djangoproject --superuser
-  - createdb -U postgres -O djangoproject djangoproject
+  - createuser -U postgres -d travelproject --superuser
+  - createdb -U postgres -O travelproject travelproject
 script:
   - tox
 notifications:
