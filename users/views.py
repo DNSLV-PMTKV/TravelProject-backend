@@ -59,7 +59,7 @@ class RegisterView(CreateAPIView):
         user.save()
         unconfirmed_user.save()
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(self.serializer_class(user).data, status=status.HTTP_201_CREATED)
 
 
 class ConfirmEmailView(APIView):

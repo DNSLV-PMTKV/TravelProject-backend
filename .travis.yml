@@ -1,0 +1,16 @@
+language: python
+python:
+  - '3.8'
+addons:
+  postgresql: '12.4'
+install:
+  - pip install tox
+before_script:
+  - createuser -U postgres -d djangoproject --superuser
+  - createdb -U postgres -O djangoproject djangoproject
+script:
+  - tox
+notifications:
+  email:
+    on_success: never
+    on_failure: always
