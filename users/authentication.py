@@ -8,8 +8,8 @@ from rest_framework.exceptions import AuthenticationFailed
 class ExpiringTokenAuthentication(TokenAuthentication):
     def authenticate_credentials(self, key):
         try:
-            token = self.model.objects.get(key=key)
-        except self.model.DoesNotExist:
+            token = self.get_model().objects.get(key=key)
+        except self.get_model().DoesNotExist:
             raise AuthenticationFailed('Invalid token')
 
         if not token.user.is_active:
@@ -19,6 +19,7 @@ class ExpiringTokenAuthentication(TokenAuthentication):
         utc_now = utc_now.replace(tzinfo=pytz.utc)
 
         if token.created < utc_now - datetime.timedelta(hours=settings.TOKEN_EXPIRE_IN_HOURS):
+            token.delete()
             raise AuthenticationFailed('Token has expired')
 
         return token.user, token

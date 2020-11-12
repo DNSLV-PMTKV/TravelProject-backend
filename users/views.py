@@ -5,7 +5,8 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from rest_framework import status
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, RetrieveAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.exceptions import APIException, NotFound
 from rest_framework.response import Response
@@ -106,3 +107,13 @@ class LoginView(ObtainAuthToken):
             return Response({'token': token.key})
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LogoutView(RetrieveAPIView):
+    """ Delete logged user token from the database. """
+
+    permission_classes = [IsAuthenticated, ]
+
+    def get(self, request, *args, **kwargs):
+        request.user.auth_token.delete()
+        return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)

@@ -33,6 +33,6 @@ api_urls = [
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(api_urls)),
-    path("swagger-docs/", SchemaView.with_ui(
+    path("swagger/", SchemaView.with_ui(
         "swagger", cache_timeout=0), name="schema-swagger-ui"),
 ]
