@@ -5,7 +5,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, RetrieveAPIView
+from rest_framework.generics import CreateAPIView, RetrieveAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.exceptions import APIException, NotFound
@@ -16,6 +16,7 @@ from rest_framework.settings import api_settings
 
 from .serializers import RegisterSerializer, UserSerializer, LoginSerializer
 from .models import UnconfirmedUser, User
+from .permissions import UserPermissions
 
 
 def send_confirmation_email(to_mail: str, token: str):
@@ -117,3 +118,16 @@ class LogoutView(RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         request.user.auth_token.delete()
         return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
+
+
+class UserDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [UserPermissions, ]
+    serializer_class = UserSerializer
+    lookup_field = 'id'
+    queryset = get_user_model().objects.filter(is_active=True)
+
+
+class UserListView(ListAPIView):
+    permission_classes = [UserPermissions, ]
+    serializer_class = UserSerializer
+    queryset = get_user_model().objects.filter(is_active=True)

@@ -1,5 +1,6 @@
 [run]
 branch = 1
+omit = .tox*
 
 [report]
-omit = .tox*,*tests*,*migrations*,*apps*,*__init__*,*admin*,travelproject/*,manage.py
+omit = .tox*,*tests*,*migrations*,*apps*,*__init__*,*admin*,travelproject/*,manage.py,
