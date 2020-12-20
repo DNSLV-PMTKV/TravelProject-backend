@@ -3,3 +3,4 @@ django-filter < 2.5.0, >= 2.4.0
 djangorestframework < 3.13.0, >= 3.12.1
 Pillow < 8.1.0, >= 8.0.0
 psycopg2 < 2.9.0, >= 2.8.6
+django-cors-headers < 3.7.0, >= 3.6.0

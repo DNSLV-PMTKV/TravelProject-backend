@@ -1,11 +1,13 @@
 import uuid
 import datetime
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, RetrieveAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
+from rest_framework.generics import (
+    CreateAPIView, RetrieveAPIView, RetrieveUpdateDestroyAPIView, ListAPIView)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.exceptions import APIException, NotFound
@@ -95,7 +97,7 @@ class LoginView(ObtainAuthToken):
         if serializer.is_valid():
             token, created = Token.objects.get_or_create(
                 user=serializer.validated_data['user'])
-            utc_now = datetime.datetime.utcnow()
+            utc_now = timezone.now()
 
             if not created and token.created < utc_now - datetime.timedelta(
                     hours=settings.TOKEN_EXPIRE_IN_HOURS):
