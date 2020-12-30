@@ -1,24 +1,31 @@
-import uuid
 import datetime
-from django.utils import timezone
+import uuid
+
+import pytz
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-from django.conf import settings
+from django.utils import timezone
+from django.utils.http import urlsafe_base64_encode
 from rest_framework import status
-from rest_framework.generics import (
-    CreateAPIView, RetrieveAPIView, RetrieveUpdateDestroyAPIView, ListAPIView)
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from rest_framework.exceptions import APIException, NotFound
-from rest_framework.response import Response
-from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.exceptions import APIException, NotFound, ValidationError
+from rest_framework.generics import (CreateAPIView, ListAPIView,
+                                     RetrieveAPIView,
+                                     RetrieveUpdateDestroyAPIView,
+                                     UpdateAPIView)
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.settings import api_settings
+from rest_framework.views import APIView
 
-from .serializers import RegisterSerializer, UserSerializer, LoginSerializer
-from .models import UnconfirmedUser, User
+from .models import ForgotPassword, UnconfirmedUser, User
 from .permissions import UserPermissions
+from .serializers import (ForgotPasswordSerializer, LoginSerializer,
+                          RegisterSerializer, UpdatePasswordSerializer,
+                          UserSerializer)
 
 
 def send_confirmation_email(to_mail: str, token: str):
@@ -31,6 +38,18 @@ def send_confirmation_email(to_mail: str, token: str):
     from_mail = settings.EMAIL_HOST_USER
 
     send_mail(subject, 'Activate your account',
+              from_mail, [to_mail], html_message=template)
+
+
+def send_reset_password_email(to_mail: str, reset_token: str):
+    subject = 'Reset your password'
+    context = {
+        'url': f'/api/confirm_reset_password?token={reset_token}'
+    }
+    template = render_to_string('reset_password_email.html', context)
+    from_mail = settings.EMAIL_HOST_USER
+
+    send_mail(subject, 'You\'ve requested a password change.',
               from_mail, [to_mail], html_message=template)
 
 
@@ -133,3 +152,81 @@ class UserListView(ListAPIView):
     permission_classes = [UserPermissions, ]
     serializer_class = UserSerializer
     queryset = get_user_model().objects.filter(is_active=True)
+
+
+class ForgotPasswordView(RetrieveAPIView, CreateAPIView, UpdateAPIView):
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return UpdatePasswordSerializer
+        return ForgotPasswordSerializer
+
+    def _create_reset_password_token(self, email: str) -> str:
+        return urlsafe_base64_encode(bytes(email, 'utf-8'))
+
+    def create(self, request, *args, **kwargs):
+        ''' Creates a ForgotPassword entry in the database and sends email to user '''
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data.get('email')
+        user = get_user_model().objects.get(email=email)
+
+        response = Response(
+            {"detail": "Please check your email address."}, status=status.HTTP_200_OK)
+
+        if not user:
+            return response
+
+        reset_token = self._create_reset_password_token(email)
+        forgot_password = ForgotPassword(user=user, token=reset_token)
+
+        try:
+            send_reset_password_email(email, reset_token)
+        except:
+            raise APIException(
+                'Something went wrong. Please try again in a few moments.')
+
+        forgot_password.save()
+
+        return response
+
+    def retrieve(self, request, *args, **kwargs):
+        ''' Validate if the reset token is correct '''
+
+        reset_token = request.query_params.get('reset_token', None)
+
+        try:
+            forgot_password = ForgotPassword.objects.get(token=reset_token)
+        except ForgotPassword.DoesNotExist:
+            raise NotFound('Token is invalid.')
+
+        utc_now = datetime.datetime.utcnow()
+        utc_now = utc_now.replace(tzinfo=pytz.utc)
+        if forgot_password.created_at < utc_now - datetime.timedelta(
+                hours=settings.TOKEN_EXPIRE_IN_HOURS):
+            forgot_password.delete()
+            raise ValidationError('Token has expired')
+
+        return Response(None, status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        ''' Update users password '''
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        token = serializer.validated_data.get('reset_token')
+
+        forgot_password = ForgotPassword.objects.get(token=token)
+        user = forgot_password.user
+
+        user.set_password(serializer.validated_data.get('password'))
+        user.save()
+        forgot_password.delete()
+
+        return Response(None, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, *args, **kwargs):
+        pass
