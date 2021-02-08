@@ -37,3 +37,4 @@ class UnconfirmedUserAdmin(admin.ModelAdmin):
 
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.UnconfirmedUser, UnconfirmedUserAdmin)
+admin.site.register(models.ForgotPassword)

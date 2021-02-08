@@ -1,4 +1,5 @@
 import datetime
+import logging
 import uuid
 
 import pytz
@@ -26,6 +27,8 @@ from .permissions import UserPermissions
 from .serializers import (ForgotPasswordSerializer, LoginSerializer,
                           RegisterSerializer, UpdatePasswordSerializer,
                           UserSerializer)
+
+logger = logging.getLogger(__name__)
 
 
 def send_confirmation_email(to_mail: str, token: str):
@@ -171,12 +174,14 @@ class ForgotPasswordView(RetrieveAPIView, CreateAPIView, UpdateAPIView):
         serializer.is_valid(raise_exception=True)
 
         email = serializer.validated_data.get('email')
-        user = get_user_model().objects.get(email=email)
-
         response = Response(
             {"detail": "Please check your email address."}, status=status.HTTP_200_OK)
 
-        if not user:
+        try:
+            user = get_user_model().objects.get(email=email)
+        except get_user_model().DoesNotExist:
+            logger.warning(
+                'User tried to send reset password email to: %s', email)
             return response
 
         reset_token = self._create_reset_password_token(email)
