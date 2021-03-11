@@ -12,7 +12,7 @@ def generate_token_url(token: str) -> str:
     return reverse('users:confirm') + f'?token={token}'
 
 
-class RegistrationAPITests(TestCase):
+class ConfirmRegistrationAPITests(TestCase):
 
     confirm_url = reverse('users:confirm')
 

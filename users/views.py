@@ -1,6 +1,5 @@
 import datetime
 import logging
-import uuid
 
 import pytz
 from django.conf import settings
@@ -18,9 +17,11 @@ from rest_framework.generics import (CreateAPIView, ListAPIView,
                                      RetrieveUpdateDestroyAPIView,
                                      UpdateAPIView)
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
+
 
 from .models import ForgotPassword, UnconfirmedUser, User
 from .permissions import UserPermissions
@@ -56,16 +57,17 @@ def send_reset_password_email(to_mail: str, reset_token: str):
               from_mail, [to_mail], html_message=template)
 
 
+def create_base64_token(content: str) -> str:
+    return urlsafe_base64_encode(bytes(content, 'utf-8'))
+
+
 class RegisterView(CreateAPIView):
     """ Registration view """
 
     serializer_class = RegisterSerializer
     queryset = get_user_model().objects.all()
 
-    def _create_token(self):
-        return uuid.uuid4()
-
-    def create(self, request, *args, **kwargs):
+    def create(self, request: Request, *args, **kwargs):
 
         serializer = self.serializer_class(
             data=request.data, context={'request': request})
@@ -73,7 +75,7 @@ class RegisterView(CreateAPIView):
 
         user = User(**serializer.validated_data)
         unconfirmed_user = UnconfirmedUser(
-            user=user, token=self._create_token())
+            user=user, token=create_base64_token(user.email))
 
         try:
             send_confirmation_email(user.email, unconfirmed_user.token)
@@ -90,7 +92,7 @@ class RegisterView(CreateAPIView):
 
 class ConfirmEmailView(APIView):
 
-    def get(self, request):
+    def get(self, request: Request):
         token = request.query_params.get('token', None)
 
         if token is None:
@@ -113,7 +115,7 @@ class LoginView(ObtainAuthToken):
     serializer_class = LoginSerializer
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
 
         if serializer.is_valid():
@@ -139,7 +141,7 @@ class LogoutView(RetrieveAPIView):
 
     permission_classes = [IsAuthenticated, ]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: Request, *args, **kwargs):
         request.user.auth_token.delete()
         return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
 
@@ -157,17 +159,28 @@ class UserListView(ListAPIView):
     queryset = get_user_model().objects.filter(is_active=True)
 
 
+class LoggedUserView(RetrieveAPIView):
+    permission_classes = [UserPermissions, ]
+    serializer_class = UserSerializer
+    lookup_field = 'id'
+    queryset = get_user_model().objects.filter(is_active=True)
+
+    def get(self, request: Request, *args, **kwargs):
+        serializer = self.get_serializer_class()
+        data = serializer(request.user).data
+        return Response(data, status=status.HTTP_200_OK)
+
+
 class ForgotPasswordView(RetrieveAPIView, CreateAPIView, UpdateAPIView):
+
+    http_method_names = ['post', 'put', 'get', 'head']
 
     def get_serializer_class(self):
         if self.request.method == 'PUT':
             return UpdatePasswordSerializer
         return ForgotPasswordSerializer
 
-    def _create_reset_password_token(self, email: str) -> str:
-        return urlsafe_base64_encode(bytes(email, 'utf-8'))
-
-    def create(self, request, *args, **kwargs):
+    def create(self, request: Request, *args, **kwargs):
         ''' Creates a ForgotPassword entry in the database and sends email to user '''
 
         serializer = self.get_serializer(data=request.data)
@@ -184,8 +197,16 @@ class ForgotPasswordView(RetrieveAPIView, CreateAPIView, UpdateAPIView):
                 'User tried to send reset password email to: %s', email)
             return response
 
-        reset_token = self._create_reset_password_token(email)
+        reset_token = create_base64_token(f'{email}_reset_token')
         forgot_password = ForgotPassword(user=user, token=reset_token)
+
+        try:
+            existing_token = ForgotPassword.objects.get(token=reset_token)
+            existing_token.delete()
+            logger.info(
+                'User "%s" used forgot password api more than once.', email)
+        except ForgotPassword.DoesNotExist:
+            pass
 
         try:
             send_reset_password_email(email, reset_token)
@@ -197,7 +218,7 @@ class ForgotPasswordView(RetrieveAPIView, CreateAPIView, UpdateAPIView):
 
         return response
 
-    def retrieve(self, request, *args, **kwargs):
+    def retrieve(self, request: Request, *args, **kwargs):
         ''' Validate if the reset token is correct '''
 
         reset_token = request.query_params.get('reset_token', None)
@@ -216,7 +237,7 @@ class ForgotPasswordView(RetrieveAPIView, CreateAPIView, UpdateAPIView):
 
         return Response(None, status=status.HTTP_200_OK)
 
-    def update(self, request, *args, **kwargs):
+    def update(self, request: Request, *args, **kwargs):
         ''' Update users password '''
 
         serializer = self.get_serializer(data=request.data)
@@ -232,6 +253,3 @@ class ForgotPasswordView(RetrieveAPIView, CreateAPIView, UpdateAPIView):
         forgot_password.delete()
 
         return Response(None, status=status.HTTP_200_OK)
-
-    def partial_update(self, request, *args, **kwargs):
-        pass

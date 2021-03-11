@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -126,6 +127,50 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+if 'test' in sys.argv:
+    _LOG_HANDLERS = ['null']
+else:
+    _LOG_HANDLERS = ['console', 'file']
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'root': {
+        'level': 'INFO',
+        'handlers': _LOG_HANDLERS
+    },
+    'formatters': {
+        'default': {
+            'format': '%(asctime)s [ %(levelname)-8s ] %(message)s',
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'django.log',
+            'formatter': 'default'
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'default'
+        },
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': _LOG_HANDLERS,
+            'level': 'INFO',
+            'propagate': True,
+        }
+    },
+}
 
 
 # Static files (CSS, JavaScript, Images)
