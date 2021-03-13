@@ -11,17 +11,16 @@ from django.utils.http import urlsafe_base64_encode
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.decorators import action
 from rest_framework.exceptions import APIException, NotFound, ValidationError
-from rest_framework.generics import (CreateAPIView, ListAPIView,
-                                     RetrieveAPIView,
-                                     RetrieveUpdateDestroyAPIView,
+from rest_framework.generics import (CreateAPIView, RetrieveAPIView,
                                      UpdateAPIView)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
-
+from rest_framework.viewsets import ModelViewSet
 
 from .models import ForgotPassword, UnconfirmedUser, User
 from .permissions import UserPermissions
@@ -64,6 +63,7 @@ def create_base64_token(content: str) -> str:
 class RegisterView(CreateAPIView):
     """ Registration view """
 
+    http_method_names = ['post']
     serializer_class = RegisterSerializer
     queryset = get_user_model().objects.all()
 
@@ -92,6 +92,8 @@ class RegisterView(CreateAPIView):
 
 class ConfirmEmailView(APIView):
 
+    http_method_names = ['get']
+
     def get(self, request: Request):
         token = request.query_params.get('token', None)
 
@@ -112,6 +114,7 @@ class ConfirmEmailView(APIView):
 
 class LoginView(ObtainAuthToken):
 
+    http_method_names = ['post']
     serializer_class = LoginSerializer
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
 
@@ -139,6 +142,7 @@ class LoginView(ObtainAuthToken):
 class LogoutView(RetrieveAPIView):
     """ Delete logged user token from the database. """
 
+    http_method_names = ['get']
     permission_classes = [IsAuthenticated, ]
 
     def get(self, request: Request, *args, **kwargs):
@@ -146,26 +150,15 @@ class LogoutView(RetrieveAPIView):
         return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
 
 
-class UserDetailView(RetrieveUpdateDestroyAPIView):
-    permission_classes = [UserPermissions, ]
+class UserViewSet(ModelViewSet):
+    http_method_names = ['get', 'put', 'delete', 'head']
+    queryset = get_user_model().objects.filter(is_active=True)
     serializer_class = UserSerializer
     lookup_field = 'id'
-    queryset = get_user_model().objects.filter(is_active=True)
+    permission_classes = [IsAuthenticated, UserPermissions]
 
-
-class UserListView(ListAPIView):
-    permission_classes = [UserPermissions, ]
-    serializer_class = UserSerializer
-    queryset = get_user_model().objects.filter(is_active=True)
-
-
-class LoggedUserView(RetrieveAPIView):
-    permission_classes = [UserPermissions, ]
-    serializer_class = UserSerializer
-    lookup_field = 'id'
-    queryset = get_user_model().objects.filter(is_active=True)
-
-    def get(self, request: Request, *args, **kwargs):
+    @action(methods=['get'], detail=True)
+    def get_auth_user(self, request: Request):
         serializer = self.get_serializer_class()
         data = serializer(request.user).data
         return Response(data, status=status.HTTP_200_OK)
