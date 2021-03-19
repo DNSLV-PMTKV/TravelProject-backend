@@ -10,6 +10,15 @@ before_install:
   - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - sudo apt-get update
   - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+  - touch .env
+  - echo ${DB_NAME} >> .env
+  - echo ${DB_USER} >> .env
+  - echo ${DB_PASS} >> .env
+  - echo ${DB_HOST} >> .env
+  - echo ${DB_PORT} >> .env
+  - echo ${POSTGRES_USER} >> .env
+  - echo ${POSTGRES_PASSWORD} >> .env
+  - echo ${POSTGRES_DB} >> .env
 install:
   - pip install docker-compose
 script:
