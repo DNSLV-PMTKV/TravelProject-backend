@@ -1,10 +1,9 @@
-import datetime
-
 import mock
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import serializers, status
 from users.models import ForgotPassword
 
@@ -104,7 +103,7 @@ class ForgotPasswordAPITests(TestCase):
     def test_validate_expired_token(self):
         """ Validate expired reset token. """
 
-        yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+        yesterday = timezone.now() - timezone.timedelta(days=1)
         with mock.patch('django.utils.timezone.now') as mock_now:
             mock_now.return_value = yesterday
             forgot_password = ForgotPassword(

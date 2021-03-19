@@ -24,3 +24,19 @@
     ```
     python manage.py runserver
     ```
+
+### How to run locally (using Docker):
+
+- Start the server
+    ```
+    docker-compose up --build
+    ```
+    or
+    ```
+    docker-compose up -d
+    ```
+
+- Run tests
+    ```
+    docker-compose run --rm django coverage run --source=. manage.py test -v2
+    ```

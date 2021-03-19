@@ -4,14 +4,9 @@ language: python
 python:
   - '3.8'
 services:
-  - postgresql
-install:
-  - pip install tox
-before_script:
-  - createuser -U postgres -d travelproject --superuser
-  - createdb -U postgres -O travelproject travelproject
+  - docker
 script:
-  - tox
+  - docker-compose run --rm django coverage run --source=. manage.py test -v2
 notifications:
   email:
     on_success: never

@@ -1,0 +1,9 @@
+.dockerignore
+.git/
+.gitignore
+README.md
+LICENSE
+.vscode
+htmlcov/
+*.pyc
+__pycache__
