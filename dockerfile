@@ -23,4 +23,6 @@ RUN apk del .tmp-build-deps
 
 COPY . $APP_HOME
 
+RUN chmod +x entrypoint.sh
+
 ENTRYPOINT ["/home/app/django/entrypoint.sh"]

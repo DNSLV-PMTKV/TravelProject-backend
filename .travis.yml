@@ -17,6 +17,8 @@ before_install:
   - echo ${POSTGRES_DB} >> .env
 install:
   - pip install docker-compose
+before_script:
+  - docker-compose build
 script:
   - docker-compose run --rm django coverage run --source=. manage.py test -v2
 notifications:
