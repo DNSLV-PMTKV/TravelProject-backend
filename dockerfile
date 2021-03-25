@@ -1,4 +1,4 @@
-FROM python:3.8-alpine
+FROM python:3.8-slim-buster
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -15,11 +15,9 @@ WORKDIR $APP_HOME
 
 RUN pip install --upgrade pip
 COPY ./requirements ./requirements
-RUN apk add --update --no-cache postgresql-client jpeg-dev tzdata
-RUN apk add --update --no-cache --virtual .tmp-build-deps \
-    gcc libc-dev linux-headers postgresql-dev musl-dev zlib zlib-dev
+
+RUN apt-get update && apt-get -y install netcat gcc postgresql tzdata libpq-dev && apt-get clean
 RUN pip install -r requirements/dev.txt
-RUN apk del .tmp-build-deps
 
 COPY . $APP_HOME
 
