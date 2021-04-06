@@ -6,11 +6,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-from django.utils import timezone
 from django.utils.http import urlsafe_base64_encode
 from rest_framework import status
-from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException, NotFound, ValidationError
 from rest_framework.generics import (CreateAPIView, RetrieveAPIView,
@@ -21,6 +18,7 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import ForgotPassword, UnconfirmedUser, User
 from .permissions import UserPermissions
@@ -79,7 +77,8 @@ class RegisterView(CreateAPIView):
 
         try:
             send_confirmation_email(user.email, unconfirmed_user.token)
-        except:
+        except Exception as exception:
+            logger.error(exception)
             raise APIException(
                 'Something went wrong. Please try again in a few moments.')
 
@@ -112,31 +111,11 @@ class ConfirmEmailView(APIView):
         return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
 
-class LoginView(ObtainAuthToken):
+class LoginView(TokenObtainPairView):
 
     http_method_names = ['post']
     serializer_class = LoginSerializer
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
-
-    def post(self, request: Request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
-
-        if serializer.is_valid():
-            token, created = Token.objects.get_or_create(
-                user=serializer.validated_data['user'])
-            utc_now = timezone.now()
-
-            if not created and token.created < utc_now - datetime.timedelta(
-                    hours=settings.TOKEN_EXPIRE_IN_HOURS):
-                token.delete()
-                token = Token.objects.create(
-                    user=serializer.validated_data['user'])
-                token.created = datetime.datetime.utcnow()
-                token.save()
-
-            return Response({'token': token.key})
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutView(RetrieveAPIView):

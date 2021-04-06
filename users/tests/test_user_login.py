@@ -26,7 +26,8 @@ class LoginAPITests(TestCase):
         response = self.client.post(self.url, data)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('token', response.data)
+        self.assertIn('refresh', response.data)
+        self.assertIn('access', response.data)
 
     def test_authentication_without_password(self):
         """ Test logging without password. """
@@ -40,7 +41,7 @@ class LoginAPITests(TestCase):
         data = {'email': 'test@test.test', 'password': 'wrongPass'}
         response = self.client.post(self.url, data)
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_authentication_without_confirmed_email(self):
         """ Test logging without confirmed email. """
@@ -56,4 +57,4 @@ class LoginAPITests(TestCase):
         response = self.client.post(self.url, data)
 
         self.assertRaises(expected_exception=serializers.ValidationError)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from helpers.validators import email_is_correct
+from utils.validators import email_is_correct
 
 
 class ForgotPasswordSerializer(serializers.Serializer):
