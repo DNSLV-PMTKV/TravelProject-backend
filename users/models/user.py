@@ -1,5 +1,5 @@
 import uuid
-# import os
+import os
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin)
@@ -62,19 +62,31 @@ class User(AbstractBaseUser, PermissionsMixin):
     def fullname(self):
         return self.first_name + self.last_name
 
-    # def save(self, *args, **kwargs):
-    #     instance = kwargs.get('instance')
-    #     user = User.objects.get(id=self.id)
-    #     if user.profile_pic != self.profile_pic:
-    #         user.profile_pic.delete()
-    #         os.remove(instance.image.path)
-    #     super().save(*args, **kwargs)
+    def upload_photo(self, picture):
+        if self.profile_pic:
+            os.remove(self.profile_pic.path)
+        self.profile_pic = picture
+        self.save()
 
-    # def delete(self, using=None, keep_parents=False):
-    #     user = User.objects.get(id=self.id)
-    #     if user.profile_pic:
-    #         os.remove(user.profile_pic.path)
-    #     super().delete()
+    def remove_photo(self):
+        if self.profile_pic:
+            os.remove(self.profile_pic.path)
+        self.profile_pic.delete()
+        self.save()
+
+        # def save(self, *args, **kwargs):
+        #     instance = kwargs.get('instance')
+        #     user = User.objects.get(id=self.id)
+        #     if user.profile_pic != self.profile_pic:
+        #         user.profile_pic.delete()
+        #         os.remove(instance.image.path)
+        #     super().save(*args, **kwargs)
+
+        # def delete(self, using=None, keep_parents=False):
+        #     user = User.objects.get(id=self.id)
+        #     if user.profile_pic:
+        #         os.remove(user.profile_pic.path)
+        #     super().delete()
 
     class Meta:
         ordering = ['id']

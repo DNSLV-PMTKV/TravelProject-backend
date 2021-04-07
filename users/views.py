@@ -24,7 +24,7 @@ from .models import ForgotPassword, UnconfirmedUser, User
 from .permissions import UserPermissions
 from .serializers import (ForgotPasswordSerializer, LoginSerializer,
                           RegisterSerializer, UpdatePasswordSerializer,
-                          UserSerializer)
+                          UserSerializer, UserProfilePictureSerializer)
 
 logger = logging.getLogger(__name__)
 
@@ -130,17 +130,38 @@ class LogoutView(RetrieveAPIView):
 
 
 class UserViewSet(ModelViewSet):
-    http_method_names = ['get', 'put', 'delete', 'head']
+    http_method_names = ['get', 'put', 'delete', 'head', 'post']
     queryset = get_user_model().objects.filter(is_active=True)
     serializer_class = UserSerializer
     lookup_field = 'id'
     permission_classes = [IsAuthenticated, UserPermissions]
+
+    def get_serializer_class(self):
+        if self.action == 'upload_profile_pic':
+            return UserProfilePictureSerializer
+        return UserSerializer
 
     @action(methods=['get'], detail=True)
     def get_auth_user(self, request: Request):
         serializer = self.get_serializer_class()
         data = serializer(request.user).data
         return Response(data, status=status.HTTP_200_OK)
+
+    @action(methods=['put'], detail=True)
+    def upload_profile_pic(self, request: Request):
+        serializer = self.get_serializer_class()
+        data = serializer(request.data).instance
+        user: User = request.user
+        user.upload_photo(data.get('profile_pic'))
+        return_data = UserSerializer(user)
+        return Response(return_data.data, status=status.HTTP_200_OK)
+
+    @action(methods=['put'], detail=True)
+    def remove_profile_pic(self, request: Request):
+        user: User = request.user
+        user.remove_photo()
+        return_data = UserSerializer(user)
+        return Response(return_data.data, status=status.HTTP_200_OK)
 
 
 class ForgotPasswordView(RetrieveAPIView, CreateAPIView, UpdateAPIView):

@@ -3,3 +3,4 @@ from .user_serializer import UserSerializer
 from .login_serializer import LoginSerializer
 from .forgot_password_serializer import ForgotPasswordSerializer
 from .update_password_serializer import UpdatePasswordSerializer
+from .user_profile_pic_serializer import UserProfilePictureSerializer
