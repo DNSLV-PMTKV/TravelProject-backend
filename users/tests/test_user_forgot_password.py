@@ -177,3 +177,13 @@ class ForgotPasswordAPITests(TestCase):
             self.url, data, content_type='application/json')
 
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_validate_email(self):
+        """ Test if email validator works. """
+
+        data = {'email': 'test'}
+
+        res = self.client.post(self.url, data)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertRaises(expected_exception=serializers.ValidationError)

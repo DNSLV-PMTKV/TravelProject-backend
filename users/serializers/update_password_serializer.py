@@ -19,9 +19,3 @@ class UpdatePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError(msg)
 
         return attrs
-
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass

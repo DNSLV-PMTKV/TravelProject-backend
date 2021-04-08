@@ -74,19 +74,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.profile_pic.delete()
         self.save()
 
-        # def save(self, *args, **kwargs):
-        #     instance = kwargs.get('instance')
-        #     user = User.objects.get(id=self.id)
-        #     if user.profile_pic != self.profile_pic:
-        #         user.profile_pic.delete()
-        #         os.remove(instance.image.path)
-        #     super().save(*args, **kwargs)
-
-        # def delete(self, using=None, keep_parents=False):
-        #     user = User.objects.get(id=self.id)
-        #     if user.profile_pic:
-        #         os.remove(user.profile_pic.path)
-        #     super().delete()
+    def delete(self, using=None, keep_parents=False):
+        if self.profile_pic:
+            os.remove(self.profile_pic.path)
+        super().delete()
 
     class Meta:
         ordering = ['id']

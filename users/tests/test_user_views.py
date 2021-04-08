@@ -1,9 +1,13 @@
+import os
+
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.exceptions import NotFound
 from rest_framework.test import APIClient
+from users.models import User
 
 
 def generate_detail_url(user_id):
@@ -16,9 +20,10 @@ class UserViewSetTests(TestCase):
 
     list_url = reverse('users:users_list')
     me_url = reverse('users:logged_user')
+    photo_url = reverse('users:change_photo')
 
     def setUp(self):
-        self.user = get_user_model().objects.create_user(
+        self.user: User = get_user_model().objects.create_user(
             email='test@test.com',
             password='test123',
             first_name='first_name',
@@ -34,6 +39,10 @@ class UserViewSetTests(TestCase):
             first_name='other_f',
             last_name='other_l',
             is_active=True)
+
+    def tearDown(self):
+        if self.user.profile_pic and os.path.isfile(self.user.profile_pic.path):
+            self.user.remove_photo()
 
     def test_get_logged_user_info(self):
         """ test getting logged user info """
@@ -109,3 +118,61 @@ class UserViewSetTests(TestCase):
 
         self.assertEqual(status.HTTP_200_OK, res.status_code)
         self.assertEqual(len(res.data), 2)
+
+    def test_upload_profile_picture(self):
+        """ test uploading profile picture """
+
+        image = SimpleUploadedFile(
+            "file.png", b"file_content", content_type="image/png")
+
+        res = self.client.put(self.photo_url, {'profile_pic': image})
+
+        self.assertEqual(res.data.get('profile_pic'),
+                         self.user.profile_pic.url)
+        self.assertTrue(os.path.isfile(self.user.profile_pic.path))
+
+    def test_remove_profile_picture(self):
+        """ test if profile picture is removed from db/file system """
+        image = SimpleUploadedFile(
+            "file.png", b"file_content", content_type="image/png")
+        self.client.put(self.photo_url, {'profile_pic': image})
+
+        image_location = self.user.profile_pic.path
+
+        res = self.client.put(self.photo_url, {'profile_pic': ''})
+
+        self.assertIsNone(res.data.get('profile_pic'))
+        self.assertFalse(os.path.isfile(image_location))
+
+    def test_delete_user_with_profile_pic(self):
+        """ test if profile picture is removed from file system upon user delete """
+        image = SimpleUploadedFile(
+            "file.png", b"file_content", content_type="image/png")
+        self.client.put(self.photo_url, {'profile_pic': image})
+
+        image_location = self.user.profile_pic.path
+
+        res = self.client.delete(generate_detail_url(self.user.id))
+
+        self.assertEqual(status.HTTP_204_NO_CONTENT, res.status_code)
+        self.assertFalse(os.path.isfile(image_location))
+
+    def test_update_profile_picture(self):
+        """ test if user profile picture is updated """
+        image1 = SimpleUploadedFile(
+            "file.png", b"file_content", content_type="image/png")
+        self.client.put(self.photo_url, {'profile_pic': image1})
+
+        first_image_location = self.user.profile_pic.path
+
+        image2 = SimpleUploadedFile(
+            "file.jpeg", b"file_content2", content_type="image/jpeg")
+        res = self.client.put(self.photo_url, {'profile_pic': image2})
+
+        second_image_location = self.user.profile_pic.path
+
+        self.assertNotEqual(first_image_location, second_image_location)
+        self.assertFalse(os.path.isfile(first_image_location))
+        self.assertTrue(os.path.isfile(second_image_location))
+        self.assertEqual(res.data.get('profile_pic'),
+                         self.user.profile_pic.url)

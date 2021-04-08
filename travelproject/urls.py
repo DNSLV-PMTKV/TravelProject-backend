@@ -29,7 +29,7 @@ SchemaView = get_schema_view(
 )
 
 api_urls = [
-    path('', include('users.urls'))
+    path('users/', include('users.urls'))
 ]
 
 urlpatterns = [

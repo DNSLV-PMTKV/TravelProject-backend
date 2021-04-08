@@ -130,14 +130,14 @@ class LogoutView(RetrieveAPIView):
 
 
 class UserViewSet(ModelViewSet):
-    http_method_names = ['get', 'put', 'delete', 'head', 'post']
+    http_method_names = ['get', 'put', 'delete', 'head']
     queryset = get_user_model().objects.filter(is_active=True)
     serializer_class = UserSerializer
     lookup_field = 'id'
     permission_classes = [IsAuthenticated, UserPermissions]
 
     def get_serializer_class(self):
-        if self.action == 'upload_profile_pic':
+        if self.action == 'change_profile_picture':
             return UserProfilePictureSerializer
         return UserSerializer
 
@@ -148,18 +148,14 @@ class UserViewSet(ModelViewSet):
         return Response(data, status=status.HTTP_200_OK)
 
     @action(methods=['put'], detail=True)
-    def upload_profile_pic(self, request: Request):
+    def change_profile_picture(self, request: Request):
         serializer = self.get_serializer_class()
         data = serializer(request.data).instance
         user: User = request.user
-        user.upload_photo(data.get('profile_pic'))
-        return_data = UserSerializer(user)
-        return Response(return_data.data, status=status.HTTP_200_OK)
-
-    @action(methods=['put'], detail=True)
-    def remove_profile_pic(self, request: Request):
-        user: User = request.user
-        user.remove_photo()
+        if data.get('profile_pic'):
+            user.upload_photo(data.get('profile_pic'))
+        else:
+            user.remove_photo()
         return_data = UserSerializer(user)
         return Response(return_data.data, status=status.HTTP_200_OK)
 
@@ -224,7 +220,7 @@ class ForgotPasswordView(RetrieveAPIView, CreateAPIView, UpdateAPIView):
         utc_now = datetime.datetime.utcnow()
         utc_now = utc_now.replace(tzinfo=pytz.utc)
         if forgot_password.created_at < utc_now - datetime.timedelta(
-                hours=settings.TOKEN_EXPIRE_IN_HOURS):
+                hours=settings.RESET_PASSWORD_TOKEN_EXPIRE_IN_HOURS):
             forgot_password.delete()
             raise ValidationError('Token has expired')
 

@@ -11,13 +11,3 @@ class UserSerializer(serializers.ModelSerializer):
                   'last_name', 'is_active', 'profile_pic']
         read_only_fields = ['id', 'is_staff',
                             'is_active', 'is_super_user', 'profile_pic']
-
-    def update(self, instance, validated_data):
-        """Update a user, setting the password correctly and return it."""
-
-        password = validated_data.pop('password', None)
-        user = super().update(instance, validated_data)
-        if password:
-            user.set_password(password)
-            user.save()
-        return user

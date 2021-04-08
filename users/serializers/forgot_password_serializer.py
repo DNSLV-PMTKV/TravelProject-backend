@@ -9,9 +9,3 @@ class ForgotPasswordSerializer(serializers.Serializer):
         if not email_is_correct(value):
             raise serializers.ValidationError('Please enter a valid email')
         return value
-
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
