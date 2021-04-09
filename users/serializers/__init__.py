@@ -2,5 +2,6 @@ from .register_serializer import RegisterSerializer
 from .user_serializer import UserSerializer
 from .login_serializer import LoginSerializer
 from .forgot_password_serializer import ForgotPasswordSerializer
-from .update_password_serializer import UpdatePasswordSerializer
+from .reset_password_serializer import ResetPasswordSerializer
 from .user_profile_pic_serializer import UserProfilePictureSerializer
+from .change_password_serializer import ChangePasswordSerializer

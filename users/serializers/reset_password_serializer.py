@@ -3,7 +3,7 @@ from collections import OrderedDict
 from rest_framework import serializers
 
 
-class UpdatePasswordSerializer(serializers.Serializer):
+class ResetPasswordSerializer(serializers.Serializer):
     reset_token = serializers.CharField(write_only=True, required=True)
     password = serializers.CharField(
         style={'input_type': 'password'}, write_only=True, required=True)

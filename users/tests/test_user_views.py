@@ -5,7 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.test import APIClient
 from users.models import User
 
@@ -21,6 +21,7 @@ class UserViewSetTests(TestCase):
     list_url = reverse('users:users_list')
     me_url = reverse('users:logged_user')
     photo_url = reverse('users:change_photo')
+    password_url = reverse('users:change_password')
 
     def setUp(self):
         self.user: User = get_user_model().objects.create_user(
@@ -176,3 +177,45 @@ class UserViewSetTests(TestCase):
         self.assertTrue(os.path.isfile(second_image_location))
         self.assertEqual(res.data.get('profile_pic'),
                          self.user.profile_pic.url)
+
+    def test_update_password(self):
+        """ test update password endpoint """
+        data = {
+            'old_password': 'test123',
+            'new_password': 'new_test',
+            're_password': 'new_test'
+        }
+
+        current_user_password = self.user.password
+
+        res = self.client.put(self.password_url, data)
+        self.user.refresh_from_db()
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertNotEqual(self.user.password, current_user_password)
+        self.assertNotEqual(self.user.password, data.get('new_test'))
+
+    def test_update_password_incorrect_old_password(self):
+        """ test to verify old password is matching user password """
+        data = {
+            'old_password': 'test124',
+            'new_password': 'new_test',
+            're_password': 'new_test'
+        }
+
+        res = self.client.put(self.password_url, data)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertRaises(expected_exception=ValidationError)
+
+    def test_update_password_new_password_not_matching(self):
+        """ test if new_password and re_password are matching """
+        data = {
+            'old_password': 'test123',
+            'new_password': 'new_tes',
+            're_password': 'new_test'
+        }
+
+        res = self.client.put(self.password_url, data)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertRaises(expected_exception=ValidationError)

@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException, NotFound, ValidationError
@@ -23,8 +24,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import ForgotPassword, UnconfirmedUser, User
 from .permissions import UserPermissions
 from .serializers import (ForgotPasswordSerializer, LoginSerializer,
-                          RegisterSerializer, UpdatePasswordSerializer,
-                          UserSerializer, UserProfilePictureSerializer)
+                          RegisterSerializer, ResetPasswordSerializer,
+                          UserSerializer, UserProfilePictureSerializer, ChangePasswordSerializer)
 
 logger = logging.getLogger(__name__)
 
@@ -160,13 +161,26 @@ class UserViewSet(ModelViewSet):
         return Response(return_data.data, status=status.HTTP_200_OK)
 
 
+class ChangePasswordView(UpdateAPIView):
+    http_method_names = ['put', 'head']
+    queryset = get_user_model().objects.filter(is_active=True)
+    permission_classes = [IsAuthenticated, UserPermissions]
+    serializer_class = ChangePasswordSerializer
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        obj = get_object_or_404(queryset, id=self.request.user.id)
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+
 class ForgotPasswordView(RetrieveAPIView, CreateAPIView, UpdateAPIView):
 
     http_method_names = ['post', 'put', 'get', 'head']
 
     def get_serializer_class(self):
         if self.request.method == 'PUT':
-            return UpdatePasswordSerializer
+            return ResetPasswordSerializer
         return ForgotPasswordSerializer
 
     def create(self, request: Request, *args, **kwargs):
