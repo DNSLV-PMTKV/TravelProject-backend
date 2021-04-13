@@ -10,28 +10,28 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
+import datetime
 import os
 import sys
-import datetime
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+import environ
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '5*jr0y6%k&!cy_9kr*tvz%(2818v#=b47+6iw#=hjnog7s)v+t'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 1)
-
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1').split()
+env = environ.Env(
+    DEBUG=(int, 0)
+)
+environ.Env.read_env('.env')
 
 
-# Application definition
+SECRET_KEY = env.str('DJANGO_SECRET_KEY',
+                     default='5*jr0y6%k&!cy_9kr*tvz%(2818v#=b47+6iw#=hjnog7s)v+t')
+
+DEBUG = env.bool('DEBUG', default=True)
+
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+
 
 DJANGO_APPS = [
     'django.contrib.admin',
@@ -44,10 +44,10 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     'rest_framework',
-    'rest_framework.authtoken',
     'drf_yasg',
     'django_filters',
     'corsheaders',
+    'rest_framework_simplejwt.token_blacklist'
 ]
 
 TRAVEL_PROJECT_APPS = [
@@ -94,11 +94,11 @@ WSGI_APPLICATION = 'travelproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'travelproject'),
-        'USER': os.environ.get('DB_USER', 'travelproject'),
-        'PASSWORD': os.environ.get('DB_PASS', 'travelproject'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+        'NAME': env.str('DB_NAME', default='travelproject'),
+        'USER': env.str('DB_USER', default='travelproject'),
+        'PASSWORD': env.str('DB_PASS', default='travelproject'),
+        'HOST': env.str('DB_HOST', default='localhost'),
+        'PORT': env.str('DB_PORT', default='5432'),
     }
 }
 
@@ -190,14 +190,15 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 AUTH_USER_MODEL = 'users.User'
+LOGIN_URL = '/api/users/login'
 
 # SMTP Mail service with decouple
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', False)
-EMAIL_PORT = os.environ.get('EMAIL_PORT', 1024)
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'travel_project')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '1234')
+EMAIL_HOST = env.str('EMAIL_HOST', default='localhost')
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=False)
+EMAIL_PORT = env.int('EMAIL_PORT', default=1024)
+EMAIL_HOST_USER = env.str('EMAIL_HOST_USER', default='travel_project')
+EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD', default='1234')
 
 
 # REST
@@ -206,6 +207,8 @@ RESET_PASSWORD_TOKEN_EXPIRE_IN_HOURS = 24
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 10,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
@@ -215,6 +218,7 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(hours=4),
     'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
     'USER_ID_CLAIM': 'id',
 }
 

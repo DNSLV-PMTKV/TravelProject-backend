@@ -119,17 +119,6 @@ class LoginView(TokenObtainPairView):
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
 
 
-class LogoutView(RetrieveAPIView):
-    """ Delete logged user token from the database. """
-
-    http_method_names = ['get']
-    permission_classes = [IsAuthenticated, ]
-
-    def get(self, request: Request, *args, **kwargs):
-        request.user.auth_token.delete()
-        return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
-
-
 class UserViewSet(ModelViewSet):
     http_method_names = ['get', 'put', 'delete', 'head']
     queryset = get_user_model().objects.filter(is_active=True)

@@ -118,7 +118,7 @@ class UserViewSetTests(TestCase):
         res = self.client.get(self.list_url)
 
         self.assertEqual(status.HTTP_200_OK, res.status_code)
-        self.assertEqual(len(res.data), 2)
+        self.assertEqual(len(res.data.get('results')), 2)
 
     def test_upload_profile_picture(self):
         """ test uploading profile picture """
