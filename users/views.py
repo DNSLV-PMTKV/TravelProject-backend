@@ -3,7 +3,7 @@ import logging
 
 import pytz
 from django.conf import settings
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
@@ -19,7 +19,8 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
 
 from .models import ForgotPassword, UnconfirmedUser, User
 from .permissions import UserPermissions
@@ -112,11 +113,46 @@ class ConfirmEmailView(APIView):
         return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
 
-class LoginView(TokenObtainPairView):
+class LoginView(ObtainAuthToken):
 
     http_method_names = ['post']
     serializer_class = LoginSerializer
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
+
+    def post(self, request: Request, *args, **kwargs):
+
+        serializer = self.serializer_class(
+            data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
+        user = authenticate(
+            username=serializer.validated_data['email'],
+            password=serializer.validated_data['password']
+        )
+        if not user:
+            raise ValidationError(
+                'Unable to authenticate with provided credentials.', code='authentication')
+
+        if user and not user.is_active:
+            raise ValidationError('Please, confirm your email address first.')
+
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user_id': user.id,
+            'user_email': user.email
+        })
+
+
+class LogoutView(RetrieveAPIView):
+    """ Delete logged user token from the database. """
+
+    http_method_names = ['get']
+    permission_classes = [IsAuthenticated, ]
+
+    def get(self, request, *args, **kwargs):
+        request.user.auth_token.delete()
+        return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
 
 
 class UserViewSet(ModelViewSet):

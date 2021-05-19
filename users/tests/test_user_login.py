@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from rest_framework import status
-from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 
 class LoginAPITests(TestCase):
@@ -26,8 +26,9 @@ class LoginAPITests(TestCase):
         response = self.client.post(self.url, data)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('refresh', response.data)
-        self.assertIn('access', response.data)
+        self.assertIn('user_id', response.data)
+        self.assertIn('user_email', response.data)
+        self.assertIn('token', response.data)
 
     def test_authentication_without_password(self):
         """ Test logging without password. """
@@ -41,7 +42,7 @@ class LoginAPITests(TestCase):
         data = {'email': 'test@test.test', 'password': 'wrongPass'}
         response = self.client.post(self.url, data)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_authentication_without_confirmed_email(self):
         """ Test logging without confirmed email. """
@@ -56,5 +57,5 @@ class LoginAPITests(TestCase):
         data = {'email': 'test123@test.test', 'password': 'test123'}
         response = self.client.post(self.url, data)
 
-        self.assertRaises(expected_exception=serializers.ValidationError)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertRaises(expected_exception=ValidationError)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

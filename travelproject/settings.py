@@ -44,10 +44,10 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     'rest_framework',
+    'rest_framework.authtoken',
     'drf_yasg',
     'django_filters',
     'corsheaders',
-    'rest_framework_simplejwt.token_blacklist'
 ]
 
 TRAVEL_PROJECT_APPS = [
@@ -203,6 +203,7 @@ EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD', default='1234')
 
 # REST
 
+TOKEN_EXPIRE_IN_HOURS = 24
 RESET_PASSWORD_TOKEN_EXPIRE_IN_HOURS = 24
 
 REST_FRAMEWORK = {
@@ -210,16 +211,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        'users.authentication.ExpiringTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication'
     ),
 }
 
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(hours=4),
-    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': True,
-    'USER_ID_CLAIM': 'id',
-}
 
 CORS_ORIGIN_ALLOW_ALL = True

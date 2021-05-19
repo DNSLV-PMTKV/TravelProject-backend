@@ -1,15 +1,10 @@
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from users.serializers import UserSerializer
+from rest_framework import serializers
+from rest_framework.serializers import Serializer
 
 
-class LoginSerializer(TokenObtainPairSerializer):
+class LoginSerializer(Serializer):
     """ Serializer for the user authentication object. """
 
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        user_data = UserSerializer(user).data
-        for key, value in user_data.items():
-            if key != 'id':
-                token[key] = value
-        return token
+    email = serializers.EmailField()
+    password = serializers.CharField(
+        style={'input_type': 'password'}, trim_whitespace=False)
