@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Create .env
-        run: mv example.env .env
+        run: mv .env.example .env
 
       - name: Build the project
         run: docker-compose build
