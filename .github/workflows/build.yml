@@ -22,6 +22,3 @@ jobs:
 
       - name: Type check
         run: docker-compose run django mypy --config mypy.ini travelproject/
-
-      - name: Run Tests
-        run: docker-compose run django py.test
