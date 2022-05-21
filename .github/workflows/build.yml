@@ -8,11 +8,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Build the project
-        run: |
-          docker-compose build
-          docker-compose run django mv example.env .env
+      - name: Create .env
+        run: mv example.env .env
 
+      - name: Build the project
+        run: docker-compose build
+          
       - name: Format code with black
         run: docker-compose run django black . --check
 
