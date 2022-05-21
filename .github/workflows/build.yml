@@ -1,0 +1,23 @@
+name: Build
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build the project
+        run: |
+          docker-compose build
+          docker-compose run django mv example.env .env
+
+      - name: Format code with black
+        run: docker-compose run django black . --check
+
+      - name: Format code with flake8
+        run: docker-compose run django flake8
+
+      - name: Run Tests
+        run: docker-compose run django py.test

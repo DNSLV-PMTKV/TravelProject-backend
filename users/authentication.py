@@ -8,14 +8,12 @@ from rest_framework.exceptions import AuthenticationFailed
 
 
 def is_token_expired(token):
-    min_age = timezone.now() - timedelta(
-        hours=settings.TOKEN_EXPIRE_IN_HOURS)
+    min_age = timezone.now() - timedelta(hours=settings.TOKEN_EXPIRE_IN_HOURS)
     expired = token.created < min_age
     return expired
 
 
 class ExpiringTokenAuthentication(TokenAuthentication):
-
     def authenticate_credentials(self, key):
         try:
             token = Token.objects.get(key=key)

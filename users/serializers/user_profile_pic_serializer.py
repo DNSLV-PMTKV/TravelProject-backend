@@ -7,5 +7,5 @@ class UserProfilePictureSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ['profile_pic']
-        read_only_fields = ['profile_pic']
+        fields = ["profile_pic"]
+        read_only_fields = ["profile_pic"]

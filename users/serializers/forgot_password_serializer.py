@@ -7,5 +7,5 @@ class ForgotPasswordSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         if not email_is_correct(value):
-            raise serializers.ValidationError('Please enter a valid email')
+            raise serializers.ValidationError("Please enter a valid email")
         return value

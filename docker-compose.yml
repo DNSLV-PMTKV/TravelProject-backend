@@ -1,6 +1,7 @@
-version: '3.8'
+version: '3.9'
 
 services:
+
   django:
     container_name: travelproject_django
     build:
@@ -11,17 +12,12 @@ services:
       - .:/home/app/django
     ports:
       - 8000:8000
-    env_file:
-      - dev.env
+    env_file: .env
     depends_on:
       - postgres
+    restart: on-failure
+
   postgres:
     container_name: travelproject_postgres
     image: postgres:13.2-alpine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    env_file:
-      - dev.env
-
-volumes:
-  postgres_data:
+    env_file: .env

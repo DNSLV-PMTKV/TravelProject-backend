@@ -8,20 +8,21 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ['id', 'first_name', 'last_name',
-                  'email', 'password', 'password2']
-        read_only_fields = ['id', ]
+        fields = ["id", "first_name", "last_name", "email", "password", "password2"]
+        read_only_fields = [
+            "id",
+        ]
 
     def validate(self, attrs):
         """Validate password and password2."""
 
-        password = attrs.get('password')
-        password2 = attrs.get('password2')
+        password = attrs.get("password")
+        password2 = attrs.get("password2")
 
         if password != password2:
-            msg = ('Passwords are not identical.')
+            msg = "Passwords are not identical."
             raise serializers.ValidationError(msg)
 
-        attrs.pop('password2', None)
+        attrs.pop("password2", None)
 
         return attrs
