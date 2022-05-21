@@ -44,7 +44,9 @@ THIRD_PARTY_APPS = [
     "corsheaders",
 ]
 
-TRAVEL_PROJECT_APPS = ["users"]
+TRAVEL_PROJECT_APPS = [
+    "travelproject.users.apps.UsersConfig",
+]
 
 INSTALLED_APPS = [*DJANGO_APPS, *THIRD_PARTY_APPS, *TRAVEL_PROJECT_APPS]
 
@@ -172,28 +174,24 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 AUTH_USER_MODEL = "users.User"
 
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 # SMTP Mail service with decouple
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = env.str("EMAIL_HOST", default="localhost")
-EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
-EMAIL_PORT = env.int("EMAIL_PORT", default=1024)
-EMAIL_HOST_USER = env.str("EMAIL_HOST_USER", default="travel_project")
-EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", default="1234")
-
-
-# REST
-
-TOKEN_EXPIRE_IN_HOURS = 24
-RESET_PASSWORD_TOKEN_EXPIRE_IN_HOURS = 24
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_HOST = env.str("EMAIL_HOST", default="localhost")
+# EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
+# EMAIL_PORT = env.int("EMAIL_PORT", default=1024)
+# EMAIL_HOST_USER = env.str("EMAIL_HOST_USER", default="travel_project")
+# EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", default="1234")
 
 REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 10,
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "users.authentication.ExpiringTokenAuthentication",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
-    ),
+    ],
 }
 
 from config.settings.cors import *  # noqa

@@ -20,5 +20,8 @@ jobs:
       - name: Format code with flake8
         run: docker-compose run django flake8
 
+      - name: Type check
+        run: docker-compose run django mypy --config mypy.ini travelproject/
+
       - name: Run Tests
         run: docker-compose run django py.test

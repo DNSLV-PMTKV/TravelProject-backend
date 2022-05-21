@@ -1,0 +1,18 @@
+deploy_to_heroku:
+  runs-on: ubuntu-latest
+  on:
+    workflow_run:
+    workflows: ["build"]
+    branches: [main]
+    types:
+      - completed
+  if: github.ref == 'refs/heads/main'
+  steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: "0"
+    - name: Deploy to Heroku
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        HEROKU_APP_NAME: 'travel-project-backend'
+      run: git push --force https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_NAME.git origin/master:master
