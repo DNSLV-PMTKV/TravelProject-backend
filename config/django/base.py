@@ -121,44 +121,34 @@ USE_I18N = True
 
 USE_TZ = True
 
-if "test" in sys.argv:
-    _LOG_HANDLERS = ["null"]
-else:
-    _LOG_HANDLERS = ["console", "file"]
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "root": {"level": "INFO", "handlers": _LOG_HANDLERS},
-    "formatters": {
-        "default": {
-            "format": "%(asctime)s [ %(levelname)-8s ] %(message)s",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
         },
     },
-    "handlers": {
-        "file": {
-            "level": "INFO",
-            "class": "logging.FileHandler",
-            "filename": "django.log",
-            "formatter": "default",
-        },
-        "console": {
-            "level": "INFO",
-            "class": "logging.StreamHandler",
-            "formatter": "default",
-        },
-        "null": {
-            "level": "DEBUG",
-            "class": "logging.NullHandler",
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+        "formatters": {
+            "simple": {
+                "format": "%(levelname)s %(asctime)s %(name)s.%(funcName)s:%(lineno)s- %(message)s\n"
+            },
         },
     },
     "loggers": {
         "django": {
-            "handlers": _LOG_HANDLERS,
+            "handlers": ["console"],
             "level": "INFO",
             "propagate": False,
-        }
+            "formatters": {
+                "simple": {
+                    "format": "%(levelname)s %(asctime)s %(name)s.%(funcName)s:%(lineno)s- %(message)s\n"
+                },
+            },
+        },
     },
 }
 
@@ -168,6 +158,7 @@ LOGGING = {
 
 STATIC_URL = "/drf_static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "drf_static")
+STATICFILES_DIRS = os.path.join(BASE_DIR, "drf_static")
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
