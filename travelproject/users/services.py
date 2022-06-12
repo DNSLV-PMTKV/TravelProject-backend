@@ -1,7 +1,9 @@
-from typing import Any, Dict, List
-from rest_framework.serializers import ValidationError
-from travelproject.common.services import model_update
+from typing import Any, Dict
 
+from django.db.models.query import QuerySet
+from rest_framework.serializers import ValidationError
+
+from travelproject.common.services import model_update
 from travelproject.users.messages import (
     OLD_PASSWORD_IS_NOT_VALID,
     USER_ALREADY_EXISTS,
@@ -28,7 +30,7 @@ def user_create(
     return user
 
 
-def user_list() -> List[User]:
+def user_list() -> QuerySet[User]:
     return User.objects.filter(is_active=True)
 
 
