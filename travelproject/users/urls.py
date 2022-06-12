@@ -1,19 +1,22 @@
 from django.urls import path
-
-from travelproject.users.apis import UserAddApi
+from travelproject.users.apis import (
+    UserAddApi,
+    UserChangePasswordApi,
+    UserDeleteApi,
+    UserDetailApi,
+    UserListApi,
+    UserMeApi,
+    UserUpdateApi,
+)
 
 app_name = "users"
 
 urlpatterns = [
-    path("create/", UserAddApi.as_view(), name="user_create")
-    # path("register", RegisterView.as_view(), name="register"),
-    # path("confirm", ConfirmEmailView.as_view(), name="confirm"),
-    # path("login", LoginView.as_view(), name="login"),
-    # path("logout", LogoutView.as_view(), name="logout"),
-    # path("<int:id>", user_details, name="users_detail_view"),
-    # path("me", logged_user, name="logged_user"),
-    # path("change_photo", change_profile_picture, name="change_photo"),
-    # path("", users_list, name="users_list"),
-    # path("forgot_password", ForgotPasswordView.as_view(), name="forgot_password"),
-    # path("change_password", ChangePasswordView.as_view(), name="change_password"),
+    path("create/", UserAddApi.as_view(), name="user_create"),
+    path("me/", UserMeApi.as_view(), name="user_me"),
+    path("<int:user_id>/", UserDetailApi.as_view(), name="user_detail"),
+    path("list/", UserListApi.as_view(), name="user_list"),
+    path("delete/", UserDeleteApi.as_view(), name="user_delete"),
+    path("update/", UserUpdateApi.as_view(), name="user_update"),
+    path("password/", UserChangePasswordApi.as_view(), name="user_change_passord"),
 ]
